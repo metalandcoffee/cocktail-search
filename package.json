@@ -1,13 +1,13 @@
 {
-  "name": "cocktail-lookup",
+  "name": "cocktail-search-final-project",
   "version": "1.0.0",
-  "description": "A JavaScript application that lets you search the Cocktail Db API",
+  "description": "A JavaScript application that lets you lookup cocktails by name or ingredients!",
   "main": "index.html",
   "scripts": {
     "start": "parcel index.html",
     "build": "parcel build index.html --public-url='./'"
   },
-  "author": "Your Name",
+  "author": "Ebonie Butler",
   "license": "ISC",
   "devDependencies": {
     "parcel-bundler": "^1.12.4"
