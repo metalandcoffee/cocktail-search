@@ -13,13 +13,12 @@ export default function search() {
     return `
         <h1>Find Your Cocktail 🍸</h1>
         <form name="search" id="search">
-            <p><label for="search-field">Enter Search Term Below:</label></p>
-            <input id="search-field" name="search-term" type="search" />
+            <input id="search-field" name="search-term" type="search" placeholder="Search here..." />
             <select id="search-select" name="search-type">
                 <option value="name">By Cocktail Name</option>
                 <option value="ingredient">By Ingredient</option>
             </select>
-            <input type="submit" id="submit" value="Search Cocktails" />
+            <input class="button-primary" type="submit" id="submit" value="Search Cocktails" />
         </form>
     `;
 }
@@ -27,13 +26,13 @@ export default function search() {
 async function doSearch(e) {
     e.preventDefault();
     clearLightbox();
+    clearNoResults();
 
     const term = document.getElementById(`search-field`).value.toLowerCase();
     const type = document.getElementById(`search-select`).value.toLowerCase();
     setState(`searchTerm`, term );
     setState(`searchBy`, type );
 
-    console.log(`type`, type);
     let drinks = {};
 
     if (`name` === type ) {
@@ -43,10 +42,10 @@ async function doSearch(e) {
     }
     
     setState(`drinks`, drinks);
-    console.log(state.drinks);
 
-    if (state.drinks === null) {
-        alert(`There are no results for "${state.searchTerm}"`);
+    if (state.drinks === null || state.drinks === undefined) {
+        const markup = `<h4 class="no-results">There are no results for <strong>${state.searchTerm}</strong> when searching for cocktails by ${state.searchBy}.</h4>`;
+        document.getElementById(`app`).insertAdjacentHTML(`beforeend`, markup);
         setState(`searchTerm`, null);
         document.getElementById(`search-field`).value = state.searchTerm;
     } else {
@@ -54,4 +53,9 @@ async function doSearch(e) {
         document.getElementById(`app`).insertAdjacentHTML(`beforeend`, markup);
         initLightbox();
     }
+}
+
+function clearNoResults() {
+    const noResults = document.querySelector(`.no-results`);
+    if (noResults) noResults.remove();
 }

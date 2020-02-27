@@ -204,7 +204,8 @@ exports.setState = exports.state = void 0;
 const state = {
   searchTerm: null,
   searchBy: null,
-  drinks: null
+  drinks: null,
+  currentDrink: null
 };
 exports.state = state;
 
@@ -233,7 +234,109 @@ function fetchDrinksByIngredient() {
   const url = `https://www.thecocktaildb.com/api/json/v1/1/filter.php?i=${_state.state.searchTerm}`;
   return fetch(url).then(res => res.json()).then(data => data.drinks).catch(error => console.error(error));
 }
-},{"./state":"src/state.js"}],"src/components/lightbox/index.css":[function(require,module,exports) {
+},{"./state":"src/state.js"}],"src/components/modal/index.css":[function(require,module,exports) {
+var reloadCSS = require('_css_loader');
+
+module.hot.dispose(reloadCSS);
+module.hot.accept(reloadCSS);
+},{"_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js"}],"src/components/modal/index.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.modal = modal;
+exports.open = open;
+
+var _state = require("../../state");
+
+require("./index.css");
+
+function modal() {
+  let markup = `
+    <div id="overlay">
+        <div id="modal">
+            <article>
+                <h3></h3>
+                <img src="" alt="" />
+                <h5>Ingredients</h5>
+                <ul class="ingredients"></ul>
+                <h5>Instructions</h5>
+                <p class="instructions"></p>
+            </article>
+            <button id="close" href="#">X</button>
+        </div>
+    </div>
+    `;
+  return markup;
+}
+
+function updateModalContent() {
+  const drink = _state.state.drinks[_state.state.currentDrink];
+  console.log(drink);
+  const title = drink.strDrink;
+  const url = drink.strDrinkThumb;
+  const ingredients = [];
+  let ingredientsMarkup = ``;
+  const instructions = drink.strInstructions; // There are 15 objects to store ingredients in the json. Loop through.
+
+  for (let i = 1; i <= 15; i++) {
+    const prop = `strIngredient` + i;
+
+    if (null === drink[prop]) {
+      break;
+    }
+
+    ingredients.push(drink[prop]);
+  }
+
+  for (const ingredient of ingredients) {
+    console.log(`${ingredient}`);
+    ingredientsMarkup += `<li>${ingredient}</li>`;
+  } //console.log(ingredients);
+
+
+  const titleEl = document.querySelector(`#modal h3`);
+  const imageEl = document.querySelector(`#modal img`);
+  const ingredientsEl = document.querySelector(`#modal .ingredients`);
+  const instructionsEl = document.querySelector(`#modal .instructions`);
+  titleEl.innerHTML = title;
+  imageEl.src = url;
+  imageEl.alt = title;
+  ingredientsEl.innerHTML = ingredientsMarkup;
+  instructionsEl.innerHTML = instructions;
+}
+
+function open() {
+  const container = document.querySelector(`#app`);
+  container.insertAdjacentHTML("beforeend", modal());
+  updateModalContent();
+  init();
+}
+
+function close() {
+  const overlay = document.querySelector(`#overlay`);
+  overlay.remove();
+}
+
+function init() {
+  const closeBtn = document.querySelector(`#modal #close`);
+  closeBtn.addEventListener(`click`, close);
+  const overlay = document.querySelector(`#overlay`);
+  overlay.addEventListener(`click`, handleCloseClick);
+  document.addEventListener("keyup", handleKeys);
+}
+
+function handleCloseClick(event) {
+  if (event.target.id == "overlay") {
+    close();
+  }
+}
+
+function handleKeys(event) {
+  if (event.key === "Escape") close();
+}
+},{"../../state":"src/state.js","./index.css":"src/components/modal/index.css"}],"src/components/lightbox/index.css":[function(require,module,exports) {
 var reloadCSS = require('_css_loader');
 
 module.hot.dispose(reloadCSS);
@@ -250,6 +353,8 @@ exports.clearLightbox = clearLightbox;
 
 var _state = require("../../state");
 
+var _modal = require("../modal");
+
 require("./index.css");
 
 function lightbox() {
@@ -259,7 +364,10 @@ function lightbox() {
     const url = drink.strDrinkThumb;
     const title = drink.strDrink;
     markup += `<div class="thumbnail">
-            <img src="${url}" alt="${title}" />
+            <div class="img-container">
+                <img src="${url}" alt="${title}" />
+            </div>
+            <h6>${title}</h6>
         </div>`;
   });
 
@@ -276,22 +384,23 @@ function init() {
 
 function openLightbox(e) {
   e.preventDefault();
-  const currentImageIndex = getCurrentImageIndex(event.target);
-  (0, _state.setState)(`currentImage`, currentImageIndex);
-  console.log(_state.state.currentImage);
+  const currentDrinkIndex = getCurrentDrinkIndex(event.target);
+  (0, _state.setState)(`currentDrink`, currentDrinkIndex);
+  console.log(_state.state.currentDrink);
+  (0, _modal.open)();
 }
 
-function getCurrentImageIndex(drink) {
+function getCurrentDrinkIndex(drink) {
   const drinks = Array.from(document.querySelectorAll(`.lightbox img`));
-  let currentImageIndex = drinks.map(img => img.outerHTML).findIndex(img => img == drink.outerHTML);
-  return currentImageIndex;
+  let currentDrinkIndex = drinks.map(img => img.outerHTML).findIndex(img => img == drink.outerHTML);
+  return currentDrinkIndex;
 }
 
 function clearLightbox() {
   const lightbox = document.querySelector(`.lightbox`);
   if (lightbox) lightbox.remove();
 }
-},{"../../state":"src/state.js","./index.css":"src/components/lightbox/index.css"}],"src/components/search/index.js":[function(require,module,exports) {
+},{"../../state":"src/state.js","../modal":"src/components/modal/index.js","./index.css":"src/components/lightbox/index.css"}],"src/components/search/index.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -321,13 +430,12 @@ function search() {
   return `
         <h1>Find Your Cocktail 🍸</h1>
         <form name="search" id="search">
-            <p><label for="search-field">Enter Search Term Below:</label></p>
-            <input id="search-field" name="search-term" type="search" />
+            <input id="search-field" name="search-term" type="search" placeholder="Search here..." />
             <select id="search-select" name="search-type">
                 <option value="name">By Cocktail Name</option>
                 <option value="ingredient">By Ingredient</option>
             </select>
-            <input type="submit" id="submit" value="Search Cocktails" />
+            <input class="button-primary" type="submit" id="submit" value="Search Cocktails" />
         </form>
     `;
 }
@@ -335,11 +443,11 @@ function search() {
 async function doSearch(e) {
   e.preventDefault();
   (0, _lightbox.clearLightbox)();
+  clearNoResults();
   const term = document.getElementById(`search-field`).value.toLowerCase();
   const type = document.getElementById(`search-select`).value.toLowerCase();
   (0, _state.setState)(`searchTerm`, term);
   (0, _state.setState)(`searchBy`, type);
-  console.log(`type`, type);
   let drinks = {};
 
   if (`name` === type) {
@@ -349,10 +457,10 @@ async function doSearch(e) {
   }
 
   (0, _state.setState)(`drinks`, drinks);
-  console.log(_state.state.drinks);
 
-  if (_state.state.drinks === null) {
-    alert(`There are no results for "${_state.state.searchTerm}"`);
+  if (_state.state.drinks === null || _state.state.drinks === undefined) {
+    const markup = `<h4 class="no-results">There are no results for <strong>${_state.state.searchTerm}</strong> when searching for cocktails by ${_state.state.searchBy}.</h4>`;
+    document.getElementById(`app`).insertAdjacentHTML(`beforeend`, markup);
     (0, _state.setState)(`searchTerm`, null);
     document.getElementById(`search-field`).value = _state.state.searchTerm;
   } else {
@@ -360,6 +468,11 @@ async function doSearch(e) {
     document.getElementById(`app`).insertAdjacentHTML(`beforeend`, markup);
     (0, _lightbox.init)();
   }
+}
+
+function clearNoResults() {
+  const noResults = document.querySelector(`.no-results`);
+  if (noResults) noResults.remove();
 }
 },{"./index.css":"src/components/search/index.css","../../state":"src/state.js","../../data":"src/data.js","../lightbox":"src/components/lightbox/index.js"}],"src/index.js":[function(require,module,exports) {
 "use strict";
@@ -407,7 +520,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "59495" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "49637" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

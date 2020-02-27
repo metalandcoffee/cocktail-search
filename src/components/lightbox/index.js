@@ -1,4 +1,5 @@
 import { state, setState } from "../../state";
+import { open as openModal } from "../modal";
 import "./index.css";
 
 export default function lightbox() {
@@ -7,7 +8,10 @@ export default function lightbox() {
         const url = drink.strDrinkThumb;
         const title = drink.strDrink;
         markup += `<div class="thumbnail">
-            <img src="${url}" alt="${title}" />
+            <div class="img-container">
+                <img src="${url}" alt="${title}" />
+            </div>
+            <h6>${title}</h6>
         </div>`;
     });
     markup += `</div>`;
@@ -23,19 +27,20 @@ export function init() {
 
 function openLightbox(e) {
     e.preventDefault();
-    const currentImageIndex = getCurrentImageIndex(event.target);
-    setState(`currentImage`, currentImageIndex);
-    console.log(state.currentImage);
+    const currentDrinkIndex = getCurrentDrinkIndex(event.target);
+    setState(`currentDrink`, currentDrinkIndex);
+    console.log(state.currentDrink);
+    openModal();
 }
 
-function getCurrentImageIndex(drink) {
+function getCurrentDrinkIndex(drink) {
     const drinks = Array.from(document.querySelectorAll(`.lightbox img`));
 
-    let currentImageIndex = drinks
+    let currentDrinkIndex = drinks
         .map(img => img.outerHTML)
         .findIndex(img => img == drink.outerHTML);
 
-    return currentImageIndex;
+    return currentDrinkIndex;
 }
 
 export function clearLightbox() {
